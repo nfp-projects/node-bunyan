@@ -1,21 +1,27 @@
 {
   "name": "bunyan-lite",
-  "version": "2.0.2",
+  "version": "1.0.0",
   "description": "a lite version of bunyan, a JSON logging library for node.js services without dtrace or moment",
   "author": "Jonatan Nilsson <jonatan@nilsson.is> (https://nfp.is)",
   "main": "./lib/bunyan.js",
   "bin": {
     "bunyan": "./bin/bunyan"
   },
-
   "repository": {
     "type": "git",
     "url": "git://github.com/trentm/node-bunyan.git"
   },
-  "engines": ["node >=0.10.0"],
-  "keywords": ["log", "logging", "log4j", "json", "bunyan"],
+  "engines": [
+    "node >=0.10.0"
+  ],
+  "keywords": [
+    "log",
+    "logging",
+    "log4j",
+    "json",
+    "bunyan"
+  ],
   "license": "MIT",
-
   "dependencies": {
     "exeunt": "1.1.0"
   },
@@ -31,7 +37,6 @@
     "verror": "1.3.3",
     "vasync": "1.4.3"
   },
-
   "scripts": {
     "test": "make test"
   }
