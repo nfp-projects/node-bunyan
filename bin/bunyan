@@ -99,9 +99,6 @@ var exiting = false;
 // The current raw input line being processed. Used for `uncaughtException`.
 var currLine = null;
 
-// Child dtrace process, if any. Used for signal-handling.
-var child = null;
-
 // Whether ANSI codes are being used. Used for signal-handling.
 var usingAnsiCodes = false;
 
@@ -198,13 +195,6 @@ function printHelp() {
     p('General options:');
     p('  -h, --help    print this help info and exit');
     p('  --version     print version of this command and exit');
-    p('');
-    p('Runtime log snooping (via DTrace, only on supported platforms):');
-    p('  -p PID        Process bunyan:log-* probes from the process');
-    p('                with the given PID. Can be used multiple times,');
-    p('                or specify all processes with "*", or a set of');
-    p('                processes whose command & args match a pattern');
-    p('                with "-p NAME".');
     p('');
     p('Filtering options:');
     p('  -l, --level LEVEL');
@@ -416,8 +406,6 @@ function parseArgv(argv) {
         jsonIndent: 2,
         level: null,
         strict: false,
-        pids: null,
-        pidsType: null,
         timeFormat: TIME_UTC  // one of the TIME_ constants
     };
 
@@ -516,31 +504,6 @@ function parseArgv(argv) {
                 default:
                     throw new Error(format('invalid time format: "%s"',
                         timeArg));
-                }
-                break;
-            case '-p':
-                if (!parsed.pids) {
-                    parsed.pids = [];
-                }
-                var pidArg = args.shift();
-                var pid = +(pidArg);
-                if (!isNaN(pid) || pidArg === '*') {
-                    if (parsed.pidsType && parsed.pidsType !== 'num') {
-                        throw new Error(format('cannot mix PID name and '
-                            + 'number arguments: "%s"', pidArg));
-                    }
-                    parsed.pidsType = 'num';
-                    if (!parsed.pids) {
-                        parsed.pids = [];
-                    }
-                    parsed.pids.push(isNaN(pid) ? pidArg : pid);
-                } else {
-                    if (parsed.pidsType && parsed.pidsType !== 'name') {
-                        throw new Error(format('cannot mix PID name and '
-                            + 'number arguments: "%s"', pidArg));
-                    }
-                    parsed.pidsType = 'name';
-                    parsed.pids = pidArg;
                 }
                 break;
             case '-l':
@@ -1125,173 +1088,6 @@ function processStdin(opts, stylize, callback) {
 
 
 /**
- * Process bunyan:log-* probes from the given pid.
- *
- * @params opts {Object} Bunyan options object.
- * @param stylize {Function} Output stylize function to use.
- * @param callback {Function} `function (code)`
- */
-function processPids(opts, stylize, callback) {
-    var leftover = '';  // Left-over partial line from last chunk.
-
-    /**
-     * Get the PIDs to dtrace.
-     *
-     * @param cb {Function} `function (errCode, pids)`
-     */
-    function getPids(cb) {
-        if (opts.pidsType === 'num') {
-            return cb(null, opts.pids);
-        }
-        if (process.platform === 'sunos') {
-            execFile('/bin/pgrep', ['-lf', opts.pids],
-                function (pidsErr, stdout, stderr) {
-                    if (pidsErr) {
-                        warn('bunyan: error getting PIDs for "%s": %s\n%s\n%s',
-                            opts.pids, pidsErr.message, stdout, stderr);
-                        return cb(1);
-                    }
-                    var pids = stdout.trim().split('\n')
-                        .map(function (line) {
-                            return line.trim().split(/\s+/)[0]
-                        })
-                        .filter(function (pid) {
-                            return Number(pid) !== process.pid
-                        });
-                    if (pids.length === 0) {
-                        warn('bunyan: error: no matching PIDs found for "%s"',
-                            opts.pids);
-                        return cb(2);
-                    }
-                    cb(null, pids);
-                }
-            );
-        } else {
-            var regex = opts.pids;
-            if (regex && /[a-zA-Z0-9_]/.test(regex[0])) {
-                // 'foo' -> '[f]oo' trick to exclude the 'grep' PID from its
-                // own search.
-                regex = '[' + regex[0] + ']' + regex.slice(1);
-            }
-            exec(format('ps -A -o pid,command | grep \'%s\'', regex),
-                function (pidsErr, stdout, stderr) {
-                    if (pidsErr) {
-                        warn('bunyan: error getting PIDs for "%s": %s\n%s\n%s',
-                            opts.pids, pidsErr.message, stdout, stderr);
-                        return cb(1);
-                    }
-                    var pids = stdout.trim().split('\n')
-                        .map(function (line) {
-                            return line.trim().split(/\s+/)[0];
-                        })
-                        .filter(function (pid) {
-                            return Number(pid) !== process.pid;
-                        });
-                    if (pids.length === 0) {
-                        warn('bunyan: error: no matching PIDs found for "%s"',
-                            opts.pids);
-                        return cb(2);
-                    }
-                    cb(null, pids);
-                }
-            );
-        }
-    }
-
-    getPids(function (errCode, pids) {
-        if (errCode) {
-            return callback(errCode);
-        }
-
-        var probes = pids.map(function (pid) {
-            if (!opts.level)
-                return format('bunyan%s:::log-*', pid);
-
-            var rval = [], l;
-
-            for (l in levelFromName) {
-                if (levelFromName[l] >= opts.level)
-                    rval.push(format('bunyan%s:::log-%s', pid, l));
-            }
-
-            if (rval.length != 0)
-                return rval.join(',');
-
-            warn('bunyan: error: level (%d) exceeds maximum logging level',
-                opts.level);
-            cleanupAndExit(1);
-        }).join(',');
-        var argv = ['dtrace', '-Z', '-x', 'strsize=4k',
-            '-x', 'switchrate=10hz', '-qn',
-            format('%s{printf("%s", copyinstr(arg0))}', probes)];
-        //console.log('dtrace argv: %s', argv);
-        var dtrace = spawn(argv[0], argv.slice(1),
-            // Share the stderr handle to have error output come
-            // straight through. Only supported in v0.8+.
-            {stdio: ['pipe', 'pipe', process.stderr]});
-        dtrace.on('error', function (e) {
-            if (e.syscall === 'spawn' && e.errno === 'ENOENT') {
-                console.error('bunyan: error: could not spawn "dtrace" ' +
-                    '("bunyan -p" is only supported on platforms with dtrace)');
-            } else {
-                console.error('bunyan: error: unexpected dtrace error: %s', e);
-            }
-            callback(1);
-        })
-        child = dtrace; // intentionally global
-
-        function finish(code) {
-            if (leftover) {
-                handleLogLine(null, leftover, opts, stylize);
-                leftover = '';
-            }
-            callback(code);
-        }
-
-        dtrace.stdout.setEncoding('utf8');
-        dtrace.stdout.on('data', function (chunk) {
-            var lines = chunk.split(/\r\n|\n/);
-            var length = lines.length;
-            if (length === 1) {
-                leftover += lines[0];
-                return;
-            }
-            if (length > 1) {
-                handleLogLine(null, leftover + lines[0], opts, stylize);
-            }
-            leftover = lines.pop();
-            length -= 1;
-            for (var i = 1; i < length; i++) {
-                handleLogLine(null, lines[i], opts, stylize);
-            }
-        });
-
-        if (nodeSpawnSupportsStdio) {
-            dtrace.on('exit', finish);
-        } else {
-            // Fallback (for < v0.8) to pipe the dtrace process' stderr to
-            // this stderr. Wait for all of (1) process 'exit', (2) stderr
-            // 'end', and (2) stdout 'end' before returning to ensure all
-            // stderr is flushed (issue #54).
-            var returnCode = null;
-            var eventsRemaining = 3;
-            function countdownToFinish(code) {
-                returnCode = code;
-                eventsRemaining--;
-                if (eventsRemaining == 0) {
-                    finish(returnCode);
-                }
-            }
-            dtrace.stderr.pipe(process.stderr);
-            dtrace.stderr.on('end', countdownToFinish);
-            dtrace.stderr.on('end', countdownToFinish);
-            dtrace.on('exit', countdownToFinish);
-        }
-    });
-}
-
-
-/**
  * Process all input from the given log file.
  *
  * @param file {String} Log file path to process.
@@ -1409,11 +1205,6 @@ function cleanupAndExit(code, signal) {
         stdout.write('\033[0m');
     }
 
-    // Kill possible dtrace child.
-    if (child) {
-        child.kill(signal);
-    }
-
     if (pager) {
         // Let pager know that output is done, then wait for pager to exit.
         pager.removeListener('exit', onPrematurePagerExit);
@@ -1511,12 +1302,6 @@ function main(argv) {
         console.log('bunyan ' + getVersion());
         return;
     }
-    if (opts.pids && opts.args.length > 0) {
-        warn('bunyan: error: can\'t use both "-p PID" (%s) and file (%s) args',
-            opts.pids, opts.args.join(' '));
-        cleanupAndExit(1);
-        return;
-    }
     if (opts.color === null) {
         if (process.env.BUNYAN_NO_COLOR &&
                 process.env.BUNYAN_NO_COLOR.length > 0) {
@@ -1532,7 +1317,6 @@ function main(argv) {
     var paginate = (
         process.stdout.isTTY &&
         process.stdin.isTTY &&
-        !opts.pids && // Don't page if following process output.
         opts.args.length > 0 && // Don't page if no file args to process.
         process.platform !== 'win32' &&
         (nodeVer[0] > 0 || nodeVer[1] >= 8) &&
@@ -1579,11 +1363,7 @@ function main(argv) {
     });
 
     var retval = 0;
-    if (opts.pids) {
-        processPids(opts, stylize, function (code) {
-            cleanupAndExit(code);
-        });
-    } else if (opts.args.length > 0) {
+    if (opts.args.length > 0) {
         var files = opts.args;
         files.forEach(function (file) {
             streams[file] = { stream: null, records: [], done: false }

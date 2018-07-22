@@ -19,10 +19,8 @@
   "dependencies": {
     "exeunt": "1.1.0"
   },
-  "// dtrace-provider": "required for dtrace features",
   "// mv": "required for RotatingFileStream",
   "optionalDependencies": {
-    "dtrace-provider": "~0.8",
     "mv": "~2",
     "safe-json-stringify": "~1"
   },

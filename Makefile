@@ -2,28 +2,14 @@
 #---- Tools
 
 NODEUNIT := ./node_modules/.bin/nodeunit
-SUDO := sudo
-ifeq ($(shell uname -s),SunOS)
-	# On SunOS (e.g. SmartOS) we expect to run the test suite as the
-	# root user -- necessary to run dtrace. Therefore `pfexec` isn't
-	# necessary.
-	SUDO :=
-endif
-DTRACE_UP_IN_HERE=
-ifeq ($(shell uname -s),SunOS)
-    DTRACE_UP_IN_HERE=1
-endif
-ifeq ($(shell uname -s),Darwin)
-    DTRACE_UP_IN_HERE=1
-endif
 NODEOPT ?= $(HOME)/opt
 
 
 #---- Files
 
 JSSTYLE_FILES := $(shell find lib test tools examples -name "*.js") bin/bunyan
-# All test files *except* dtrace.test.js.
-NON_DTRACE_TEST_FILES := $(shell ls -1 test/*.test.js | grep -v dtrace | xargs)
+# All test files
+TEST_FILES := $(shell ls -1 test/*.test.js | xargs)
 
 
 #---- Targets
@@ -92,16 +78,10 @@ distclean:
 
 .PHONY: test
 test: $(NODEUNIT)
-	test -z "$(DTRACE_UP_IN_HERE)" || test -n "$(SKIP_DTRACE)" || \
-		(node -e 'require("dtrace-provider").createDTraceProvider("isthisthingon")' && \
-		echo "\nNote: Use 'SKIP_DTRACE=1 make test' to skip parts of the test suite that require root." && \
-		$(SUDO) $(NODEUNIT) test/dtrace.test.js)
-	$(NODEUNIT) $(NON_DTRACE_TEST_FILES)
+	$(NODEUNIT) $(TEST_FILES)
 
 # Test with all node supported versions (presumes install locations I use on
 # my machine -- "~/opt/node-VER"):
-# Note: 'test4' is last so (if all is well) I end up with a binary
-# dtrace-provider build for my current default node version.
 .PHONY: testall
 testall: test7 test6 test012 test010 test4
 
