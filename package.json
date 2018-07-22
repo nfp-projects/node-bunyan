@@ -21,12 +21,10 @@
   },
   "// dtrace-provider": "required for dtrace features",
   "// mv": "required for RotatingFileStream",
-  "// moment": "required for local time with CLI",
   "optionalDependencies": {
     "dtrace-provider": "~0.8",
     "mv": "~2",
-    "safe-json-stringify": "~1",
-    "moment": "^2.10.6"
+    "safe-json-stringify": "~1"
   },
   "devDependencies": {
     "nodeunit": "0.9",

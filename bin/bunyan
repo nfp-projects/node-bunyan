@@ -26,12 +26,6 @@ var assert = require('assert');
 
 var exeunt = require('exeunt');
 
-try {
-    var moment = require('moment');
-} catch (e) {
-    moment = null;
-}
-
 
 //---- globals and constants
 
@@ -96,16 +90,6 @@ Object.keys(levelFromName).forEach(function (name) {
 // Display time formats.
 var TIME_UTC = 1;  // the default, bunyan's native format
 var TIME_LOCAL = 2;
-
-// Timezone formats: output format -> momentjs format string
-var TIMEZONE_UTC_FORMATS = {
-    long:  '[[]YYYY-MM-DD[T]HH:mm:ss.SSS[Z][]]',
-    short: 'HH:mm:ss.SSS[Z]'
-};
-var TIMEZONE_LOCAL_FORMATS = {
-    long:  '[[]YYYY-MM-DD[T]HH:mm:ss.SSSZ[]]',
-    short: 'HH:mm:ss.SSS'
-};
 
 
 // Boolean set to true when we are in the process of exiting. We don't always
@@ -258,8 +242,6 @@ function printHelp() {
     p('                  simple: level, followed by "-" and then the message');
     p('  -j            shortcut for `-o json`');
     p('  -0            shortcut for `-o bunyan`');
-    p('  -L, --time local');
-    p('                Display time field in local time, rather than UTC.');
     p('');
     p('Environment Variables:');
     p('  BUNYAN_NO_COLOR    Set to a non-empty value to force no output ');
@@ -523,25 +505,11 @@ function parseArgv(argv) {
             case '-0':
                 parsed.outputMode = OM_BUNYAN;
                 break;
-            case '-L':
-                parsed.timeFormat = TIME_LOCAL;
-                if (!moment) {
-                    throw new Error(
-                        'could not find moment package required for "-L"');
-                }
-                break;
             case '--time':
                 var timeArg = args.shift();
                 switch (timeArg) {
                 case 'utc':
                     parsed.timeFormat = TIME_UTC;
-                    break
-                case 'local':
-                    parsed.timeFormat = TIME_LOCAL;
-                    if (!moment) {
-                        throw new Error('could not find moment package '
-                            + 'required for "--time=local"');
-                    }
                     break
                 case undefined:
                     throw new Error('missing argument to "--time"');
@@ -795,24 +763,8 @@ function emitRecord(rec, line, opts, stylize) {
             // Fast default path: We assume the raw `rec.time` is a UTC time
             // in ISO 8601 format (per spec).
             time = '[' + rec.time + ']';
-        } else if (!moment && opts.timeFormat === TIME_UTC) {
-            // Don't require momentjs install, as long as not using TIME_LOCAL.
+        } else if (opts.timeFormat === TIME_UTC) {
             time = rec.time.substr(11);
-        } else {
-            var tzFormat;
-            var moTime = moment(rec.time);
-            switch (opts.timeFormat) {
-            case TIME_UTC:
-                tzFormat = TIMEZONE_UTC_FORMATS[short ? 'short' : 'long'];
-                moTime.utc();
-                break;
-            case TIME_LOCAL:
-                tzFormat = TIMEZONE_LOCAL_FORMATS[short ? 'short' : 'long'];
-                break;
-            default:
-                throw new Error('unexpected timeFormat: ' + opts.timeFormat);
-            };
-            time = moTime.format(tzFormat);
         }
         time = stylize(time, 'none');
         delete rec.time;
