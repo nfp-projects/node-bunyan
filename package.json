@@ -1,8 +1,8 @@
 {
-  "name": "bunyan",
+  "name": "bunyan-lite",
   "version": "2.0.2",
-  "description": "a JSON logging library for node.js services",
-  "author": "Trent Mick <trentm@gmail.com> (http://trentm.com)",
+  "description": "a lite version of bunyan, a JSON logging library for node.js services without dtrace or moment",
+  "author": "Jonatan Nilsson <jonatan@nilsson.is> (https://nfp.is)",
   "main": "./lib/bunyan.js",
   "bin": {
     "bunyan": "./bin/bunyan"
@@ -21,7 +21,7 @@
   },
   "// mv": "required for RotatingFileStream",
   "optionalDependencies": {
-    "mv": "~2",
+    "mv-lite": "~1",
     "safe-json-stringify": "~1"
   },
   "devDependencies": {
