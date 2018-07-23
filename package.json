@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/trentm/node-bunyan.git"
+    "url": "git://github.com/nfp-projects/node-bunyan-lite.git"
   },
   "engines": [
     "node >=0.10.0"
@@ -23,7 +23,6 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "exeunt": "1.1.0"
   },
   "// mv": "required for RotatingFileStream",
   "optionalDependencies": {
