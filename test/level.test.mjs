@@ -1,6 +1,4 @@
 /*
- * Copyright (c) 2014 Trent Mick. All rights reserved.
- *
  * Test the `log.level(...)`.
  */
 

@@ -1,6 +1,4 @@
 /*
- * Copyright (c) 2012 Trent Mick. All rights reserved.
- *
  * Test the standard serializers in Bunyan.
  */
 

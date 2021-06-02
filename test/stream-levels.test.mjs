@@ -1,6 +1,4 @@
 /*
- * Copyright (c) 2015 Trent Mick. All rights reserved.
- *
  * Test that streams (the various way they can be added to
  * a Logger instance) get the appropriate level.
  */

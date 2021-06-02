@@ -1,7 +1,5 @@
 #!/usr/bin/env node
 /**
- * Copyright 2017 Trent Mick
- * Copyright 2017 Joyent Inc.
  *
  * bunyan -- filter and pretty-print Bunyan log files (line-delimited JSON)
  *

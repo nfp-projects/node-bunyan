@@ -1,6 +1,4 @@
 /*
- * Copyright (c) 2015 Trent Mick. All rights reserved.
- *
  * If available, use `safe-json-stringfy` as a fallback stringifier.
  * This covers the case where an enumerable property throws an error
  * in its getter.

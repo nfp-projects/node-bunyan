@@ -1,6 +1,4 @@
 /*
- * Copyright 2016 Trent Mick
- *
  * Test emission and handling of 'error' event in a logger with a 'path'
  * stream.
  */

@@ -1,6 +1,4 @@
 /*
- * Copyright (c) 2017, Trent Mick.
- *
  * Test the bunyan CLI's handling of the "client_req" field.
  * "client_req" is a common-ish Bunyan log field from restify-clients. See:
  *      // JSSTYLED

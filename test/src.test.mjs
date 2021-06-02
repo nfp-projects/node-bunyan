@@ -1,6 +1,4 @@
 /*
- * Copyright (c) 2015 Trent Mick.
- *
  * Test `src: true` usage.
  */
 

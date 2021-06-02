@@ -1,6 +1,4 @@
 /*
- * Copyright (c) 2016 Trent Mick. All rights reserved.
- *
  * Test stream adding.
  */
 import { Eltro as t, assert} from 'eltro'

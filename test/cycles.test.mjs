@@ -1,6 +1,4 @@
 /*
- * Copyright (c) 2012 Trent Mick. All rights reserved.
- *
  * Make sure cycles are safe.
  */
 

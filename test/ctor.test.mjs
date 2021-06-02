@@ -1,6 +1,4 @@
 /*
- * Copyright (c) 2012 Trent Mick. All rights reserved.
- *
  * Test type checking on creation of the Logger.
  */
 import { Eltro as t, assert} from 'eltro'

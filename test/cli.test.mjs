@@ -1,6 +1,4 @@
 /*
- * Copyright (c) 2015 Trent Mick. All rights reserved.
- *
  * Test the `bunyan` CLI.
  */
 

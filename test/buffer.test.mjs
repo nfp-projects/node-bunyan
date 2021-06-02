@@ -1,7 +1,4 @@
 /*
- * Copyright (c) 2012 Trent Mick. All rights reserved.
- * Copyright (c) 2012 Joyent Inc. All rights reserved.
- *
  * Test logging with (accidental) usage of buffers.
  */
 
