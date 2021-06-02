@@ -13,7 +13,7 @@
  * Result: Another order of magnitude.
  */
 
-var ben = require('ben');  // npm install ben
+var ben = require('./ben');  // npm install ben
 var Logger = require('../lib/bunyan');
 
 var log = new Logger({

@@ -4,16 +4,8 @@
  * Test some `<Logger>.child(...)` behaviour.
  */
 
-var bunyan = require('../lib/bunyan');
-
-// node-tap API
-if (require.cache[__dirname + '/tap4nodeunit.js'])
-        delete require.cache[__dirname + '/tap4nodeunit.js'];
-var tap4nodeunit = require('./tap4nodeunit.js');
-var after = tap4nodeunit.after;
-var before = tap4nodeunit.before;
-var test = tap4nodeunit.test;
-
+import { Eltro as t, assert} from 'eltro'
+import bunyan from '../lib/bunyan.mjs'
 
 
 function CapturingStream(recs) {
@@ -24,10 +16,9 @@ CapturingStream.prototype.write = function (rec) {
 }
 
 
-
-test('child can add stream', function (t) {
-    var dadStream = new CapturingStream();
-    var dad = bunyan.createLogger({
+t.test('child can add stream', function () {
+    let dadStream = new CapturingStream();
+    let dad = bunyan.createLogger({
         name: 'surname',
         streams: [ {
             type: 'raw',
@@ -36,8 +27,8 @@ test('child can add stream', function (t) {
         } ]
     });
 
-    var sonStream = new CapturingStream();
-    var son = dad.child({
+    let sonStream = new CapturingStream();
+    let son = dad.child({
         component: 'son',
         streams: [ {
             type: 'raw',
@@ -50,21 +41,20 @@ test('child can add stream', function (t) {
     dad.debug('debug from dad');
     son.debug('debug from son');
 
-    var rec;
-    t.equal(dadStream.recs.length, 1);
+    let rec;
+    assert.equal(dadStream.recs.length, 1);
     rec = dadStream.recs[0];
-    t.equal(rec.msg, 'info from dad');
-    t.equal(sonStream.recs.length, 1);
+    assert.equal(rec.msg, 'info from dad');
+    assert.equal(sonStream.recs.length, 1);
     rec = sonStream.recs[0];
-    t.equal(rec.msg, 'debug from son');
+    assert.equal(rec.msg, 'debug from son');
 
-    t.end();
 });
 
 
-test('child can set level of inherited streams', function (t) {
-    var dadStream = new CapturingStream();
-    var dad = bunyan.createLogger({
+t.test('child can set level of inherited streams', function () {
+    let dadStream = new CapturingStream();
+    let dad = bunyan.createLogger({
         name: 'surname',
         streams: [ {
             type: 'raw',
@@ -75,7 +65,7 @@ test('child can set level of inherited streams', function (t) {
 
     // Intention here is that the inherited `dadStream` logs at 'debug' level
     // for the son.
-    var son = dad.child({
+    let son = dad.child({
         component: 'son',
         level: 'debug'
     });
@@ -84,20 +74,19 @@ test('child can set level of inherited streams', function (t) {
     dad.debug('debug from dad');
     son.debug('debug from son');
 
-    var rec;
-    t.equal(dadStream.recs.length, 2);
+    let rec;
+    assert.equal(dadStream.recs.length, 2);
     rec = dadStream.recs[0];
-    t.equal(rec.msg, 'info from dad');
+    assert.equal(rec.msg, 'info from dad');
     rec = dadStream.recs[1];
-    t.equal(rec.msg, 'debug from son');
+    assert.equal(rec.msg, 'debug from son');
 
-    t.end();
 });
 
 
-test('child can set level of inherited streams and add streams', function (t) {
-    var dadStream = new CapturingStream();
-    var dad = bunyan.createLogger({
+t.test('child can set level of inherited streams and add streams', function () {
+    let dadStream = new CapturingStream();
+    let dad = bunyan.createLogger({
         name: 'surname',
         streams: [ {
             type: 'raw',
@@ -108,8 +97,8 @@ test('child can set level of inherited streams and add streams', function (t) {
 
     // Intention here is that the inherited `dadStream` logs at 'debug' level
     // for the son.
-    var sonStream = new CapturingStream();
-    var son = dad.child({
+    let sonStream = new CapturingStream();
+    let son = dad.child({
         component: 'son',
         level: 'trace',
         streams: [ {
@@ -124,21 +113,20 @@ test('child can set level of inherited streams and add streams', function (t) {
     son.trace('trace from son');
     son.debug('debug from son');
 
-    t.equal(dadStream.recs.length, 3);
-    t.equal(dadStream.recs[0].msg, 'info from dad');
-    t.equal(dadStream.recs[1].msg, 'trace from son');
-    t.equal(dadStream.recs[2].msg, 'debug from son');
+    assert.equal(dadStream.recs.length, 3);
+    assert.equal(dadStream.recs[0].msg, 'info from dad');
+    assert.equal(dadStream.recs[1].msg, 'trace from son');
+    assert.equal(dadStream.recs[2].msg, 'debug from son');
 
-    t.equal(sonStream.recs.length, 1);
-    t.equal(sonStream.recs[0].msg, 'debug from son');
+    assert.equal(sonStream.recs.length, 1);
+    assert.equal(sonStream.recs[0].msg, 'debug from son');
 
-    t.end();
 });
 
 // issue #291
-test('child should not lose parent "hostname"', function (t) {
-    var stream = new CapturingStream();
-    var dad = bunyan.createLogger({
+t.test('child should not lose parent "hostname"', function () {
+    let stream = new CapturingStream();
+    let dad = bunyan.createLogger({
         name: 'hostname-test',
         hostname: 'bar0',
         streams: [ {
@@ -147,15 +135,14 @@ test('child should not lose parent "hostname"', function (t) {
             level: 'info'
         } ]
     });
-    var son = dad.child({component: 'son'});
+    let son = dad.child({component: 'son'});
 
     dad.info('HI');
     son.info('hi');
 
-    t.equal(stream.recs.length, 2);
-    t.equal(stream.recs[0].hostname, 'bar0');
-    t.equal(stream.recs[1].hostname, 'bar0');
-    t.equal(stream.recs[1].component, 'son');
+    assert.equal(stream.recs.length, 2);
+    assert.equal(stream.recs[0].hostname, 'bar0');
+    assert.equal(stream.recs[1].hostname, 'bar0');
+    assert.equal(stream.recs[1].component, 'son');
 
-    t.end();
 });

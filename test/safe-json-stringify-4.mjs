@@ -1,7 +1,8 @@
-var bunyan = require('../lib/bunyan');
+import bunyan from '../lib/bunyan.mjs'
+process.env.BUNYAN_TEST_NO_SAFE_JSON_STRINGIFY = '1';
 
 var log = bunyan.createLogger({
-    name: 'safe-json-stringify-3'
+    name: 'safe-json-stringify-4'
 });
 
 // And using `Object.defineProperty`.

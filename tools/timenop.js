@@ -5,7 +5,7 @@
 
 console.log('Time log.trace() when log level is "info":');
 
-var ben = require('ben');  // npm install ben
+var ben = require('./ben');  // npm install ben
 var bunyan = require('../lib/bunyan');
 
 function Collector() {}

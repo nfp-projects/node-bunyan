@@ -5,7 +5,7 @@
 
 console.log('Time adding "src" field with call source info:');
 
-var ben = require('ben');  // npm install ben
+var ben = require('./ben');  // npm install ben
 var Logger = require('../lib/bunyan');
 
 var records = [];

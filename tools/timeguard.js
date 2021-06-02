@@ -6,7 +6,7 @@
 
 console.log('Time JSON.stringify and alternatives in Logger._emit:');
 
-var ben = require('ben');  // npm install ben
+var ben = require('./ben');  // npm install ben
 var bunyan = require('../lib/bunyan');
 
 function Collector() {}
